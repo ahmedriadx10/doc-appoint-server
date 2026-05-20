@@ -1,25 +1,22 @@
 const express = require("express");
 const app = express();
-const dotenv=require('dotenv')
-dotenv.config()
+const dotenv = require("dotenv");
+dotenv.config();
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-
-
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
-
 
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -27,43 +24,61 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const database=client.db('doc-appoint')
-    const apppointmentCollection=database.collection('appointment')
+    const database = client.db("doc-appoint");
+    const apppointmentsCollection = database.collection("appointments");
+
+    //doc-appoint all api
+
+    app.get("/appointments", async (req, res) => {
+      const cursor = apppointmentsCollection.find();
+      const result = await cursor.toArray();
+
+      res.send(result);
+    });
 
 
-//doc-appoint all api 
+// specific doctor api
 
 
+app.get('/appointments/:id',async(req,res)=>{
+
+  const {id}=req?.params
 
 
+  const query={_id:new ObjectId(id)}
 
 
+const result=await apppointmentsCollection.findOne(query)
 
 
+console.log(result)
+
+res.send(result)
+
+})
 
 
+    app.get("/top-rated-doctors", async (req, res) => {
+
+const cursor= apppointmentsCollection.find().sort({rating:-1}).limit(3)
+const result =await cursor.toArray()
+
+res.send(result)
+
+
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!",
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
 run().catch(console.dir);
-
-
-
-
-
-
-
-
-
-
-
-
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
