@@ -80,29 +80,40 @@ async function run() {
       const result = await cursor.toArray();
 
       res.json(result);
-    }); 
-    
-    
+    });
+
     // specific booking data update / patch api
-app.patch('/bookings/:id',async(req,res)=>{
+    app.patch("/bookings/:bookingId", async (req, res) => {
+      const { bookingId } = req?.params;
+      const { body } = req;
+      const query = { _id: new ObjectId(bookingId) };
+      const result = await bookingsCollection.updateOne(query, {
+        $set: {
+          ...body,
+        },
+      });
+
+      res.json(result);
+    });
+
+// specific booking delete api
+
+app.delete('/bookings/:bookingId',async(req,res)=>{
 
 
+const {bookingId}=req?.params
 
-  const {id}=req?.params
-const {body}=req
-  const query={_id: new ObjectId(id)}
-const result=await bookingsCollection.updateOne(query,{
+console.log(bookingId)
 
-  $set:{
-    ...body
-  }
-})
-
+const query={_id:new ObjectId(bookingId)}
+const result=await bookingsCollection.deleteOne(query)
 
 res.json(result)
 
 
 })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
