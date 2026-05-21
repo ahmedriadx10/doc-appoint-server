@@ -26,46 +26,48 @@ async function run() {
 
     const database = client.db("doc-appoint");
     const apppointmentsCollection = database.collection("appointments");
-
+    const bookingsCollection = database.collection("bookings");
     //doc-appoint all api
 
     app.get("/appointments", async (req, res) => {
       const cursor = apppointmentsCollection.find();
       const result = await cursor.toArray();
 
-      res.send(result);
+      res.json(result);
     });
 
+    // specific doctor api
 
-// specific doctor api
+    app.get("/appointments/:id", async (req, res) => {
+      const { id } = req?.params;
 
+      const query = { _id: new ObjectId(id) };
 
-app.get('/appointments/:id',async(req,res)=>{
+      const result = await apppointmentsCollection.findOne(query);
 
-  const {id}=req?.params
+      console.log(result);
 
-
-  const query={_id:new ObjectId(id)}
-
-
-const result=await apppointmentsCollection.findOne(query)
-
-
-console.log(result)
-
-res.send(result)
-
-})
-
+      res.json(result);
+    });
 
     app.get("/top-rated-doctors", async (req, res) => {
+      const cursor = apppointmentsCollection
+        .find()
+        .sort({ rating: -1 })
+        .limit(3);
+      const result = await cursor.toArray();
 
-const cursor= apppointmentsCollection.find().sort({rating:-1}).limit(3)
-const result =await cursor.toArray()
+      res.json(result);
+    });
 
-res.send(result)
+    // bookings data post api
 
+    app.post("/bookings", async (req, res) => {
+      const { body } = req;
 
+      const result = await bookingsCollection.insertOne(body);
+
+      res.json(result);
     });
 
     // Send a ping to confirm a successful connection
