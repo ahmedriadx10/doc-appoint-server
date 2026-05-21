@@ -59,12 +59,9 @@ async function run() {
     const bookingsCollection = database.collection("bookings");
     //doc-appoint all api
 
-
-app.get('/',(req,res)=>{
-
-  res.send({success:true,message:'Server is running fine'})
-})
-
+    app.get("/", (req, res) => {
+      res.send({ success: true, message: "Server is running fine" });
+    });
 
     app.get("/appointments", async (req, res) => {
       const queryParams = req.query;
@@ -115,7 +112,7 @@ app.get('/',(req,res)=>{
 
     // bookings data post api
 
-    app.post("/bookings",validUser, async (req, res) => {
+    app.post("/bookings", validUser, async (req, res) => {
       const { body } = req;
 
       const result = await bookingsCollection.insertOne(body);
