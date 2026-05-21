@@ -70,6 +70,39 @@ async function run() {
       res.json(result);
     });
 
+    //  specific user booking data get api
+
+    app.get("/bookings/:id", async (req, res) => {
+      const { id } = req?.params;
+
+      const cursor = bookingsCollection.find({ userId: id });
+
+      const result = await cursor.toArray();
+
+      res.json(result);
+    }); 
+    
+    
+    // specific booking data update / patch api
+app.patch('/bookings/:id',async(req,res)=>{
+
+
+
+  const {id}=req?.params
+const {body}=req
+  const query={_id: new ObjectId(id)}
+const result=await bookingsCollection.updateOne(query,{
+
+  $set:{
+    ...body
+  }
+})
+
+
+res.json(result)
+
+
+})
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
