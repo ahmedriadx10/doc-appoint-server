@@ -30,6 +30,25 @@ async function run() {
     //doc-appoint all api
 
     app.get("/appointments", async (req, res) => {
+      const queryParams = req.query;
+
+      if (queryParams?.search) {
+        const search = queryParams?.search;
+
+
+        let query = {};
+
+        if (search && typeof search === "string" && search.trim() !== "") {
+          query.name = { $regex: search.trim(), $options: "i" };
+        }
+
+        const cursor = apppointmentsCollection.find(query);
+
+        const result = await cursor.toArray();
+
+        return res.json(result);
+      }
+
       const cursor = apppointmentsCollection.find();
       const result = await cursor.toArray();
 
@@ -45,7 +64,7 @@ async function run() {
 
       const result = await apppointmentsCollection.findOne(query);
 
-      console.log(result);
+  
 
       res.json(result);
     });
@@ -96,23 +115,16 @@ async function run() {
       res.json(result);
     });
 
-// specific booking delete api
+    // specific booking delete api
 
-app.delete('/bookings/:bookingId',async(req,res)=>{
+    app.delete("/bookings/:bookingId", async (req, res) => {
+      const { bookingId } = req?.params;
 
+      const query = { _id: new ObjectId(bookingId) };
+      const result = await bookingsCollection.deleteOne(query);
 
-const {bookingId}=req?.params
-
-console.log(bookingId)
-
-const query={_id:new ObjectId(bookingId)}
-const result=await bookingsCollection.deleteOne(query)
-
-res.json(result)
-
-
-})
-
+      res.json(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
