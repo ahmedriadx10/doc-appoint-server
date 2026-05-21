@@ -59,6 +59,13 @@ async function run() {
     const bookingsCollection = database.collection("bookings");
     //doc-appoint all api
 
+
+app.get('/',(req,res)=>{
+
+  res.send({success:true,message:'Server is running fine'})
+})
+
+
     app.get("/appointments", async (req, res) => {
       const queryParams = req.query;
 
