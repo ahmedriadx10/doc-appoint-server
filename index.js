@@ -3,6 +3,12 @@ const app = express();
 const dotenv = require("dotenv");
 dotenv.config();
 const cors = require("cors");
+const {
+  SignJWT,
+  jwtVerify,
+  generateKeyPair,
+  createRemoteJWKSet,
+} = require("jose-cjs");
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -19,10 +25,34 @@ const client = new MongoClient(uri, {
   },
 });
 
+const validUser = async (req, res, next) => {
+  const authorization = req?.headers?.authorization;
+
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "Unauthorized" });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  try {
+    const JWKS = createRemoteJWKSet(
+      new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+    );
+    const { payload } = await jwtVerify(token, JWKS);
+
+    req.user = payload;
+
+    next();
+    return;
+  } catch (error) {
+    return res.status(401).send({ error: true, message: "Unauthorized" });
+  }
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const database = client.db("doc-appoint");
     const apppointmentsCollection = database.collection("appointments");
@@ -34,7 +64,6 @@ async function run() {
 
       if (queryParams?.search) {
         const search = queryParams?.search;
-
 
         let query = {};
 
@@ -57,14 +86,12 @@ async function run() {
 
     // specific doctor api
 
-    app.get("/appointments/:id", async (req, res) => {
+    app.get("/appointments/:id", validUser, async (req, res) => {
       const { id } = req?.params;
 
       const query = { _id: new ObjectId(id) };
 
       const result = await apppointmentsCollection.findOne(query);
-
-  
 
       res.json(result);
     });
@@ -81,7 +108,7 @@ async function run() {
 
     // bookings data post api
 
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings",validUser, async (req, res) => {
       const { body } = req;
 
       const result = await bookingsCollection.insertOne(body);
@@ -91,7 +118,7 @@ async function run() {
 
     //  specific user booking data get api
 
-    app.get("/bookings/:id", async (req, res) => {
+    app.get("/bookings/:id", validUser, async (req, res) => {
       const { id } = req?.params;
 
       const cursor = bookingsCollection.find({ userId: id });
@@ -102,7 +129,7 @@ async function run() {
     });
 
     // specific booking data update / patch api
-    app.patch("/bookings/:bookingId", async (req, res) => {
+    app.patch("/bookings/:bookingId", validUser, async (req, res) => {
       const { bookingId } = req?.params;
       const { body } = req;
       const query = { _id: new ObjectId(bookingId) };
@@ -117,7 +144,7 @@ async function run() {
 
     // specific booking delete api
 
-    app.delete("/bookings/:bookingId", async (req, res) => {
+    app.delete("/bookings/:bookingId", validUser, async (req, res) => {
       const { bookingId } = req?.params;
 
       const query = { _id: new ObjectId(bookingId) };
@@ -127,7 +154,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
